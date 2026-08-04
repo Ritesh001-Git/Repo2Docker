@@ -1,0 +1,162 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'REPO_URL', defaultValue: '', description: 'Public GitHub repository URL')
+        string(name: 'IMAGE_NAME', defaultValue: '', description: 'Docker image name')
+        string(name: 'PORT', defaultValue: '3000', description: 'Application Port')
+    }
+
+    environment {
+        DOCKER = "/usr/local/bin/docker"
+        DOCKER_CONFIG = "${WORKSPACE}/.docker"
+        IMAGE_TAG = ""
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                sh '''
+                    set -eu
+
+                    rm -rf source
+                    git clone --depth 1 "$REPO_URL" source
+                '''
+            }
+        }
+
+        stage('Validate Dockerfile') {
+            steps {
+                sh '''
+                    set -eu
+
+                    test -f source/Dockerfile
+                '''
+            }
+        }
+
+        stage('Prepare Docker Config') {
+            steps {
+                sh '''
+                    set -eu
+
+                    mkdir -p "$DOCKER_CONFIG"
+
+                    cat > "$DOCKER_CONFIG/config.json" <<EOF
+{
+  "auths": {}
+}
+EOF
+                '''
+            }
+        }
+
+        stage('Docker Login') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'DockerHubCred',
+                        usernameVariable: 'DOCKERHUB_USERNAME',
+                        passwordVariable: 'DOCKERHUB_PASSWORD'
+                    )
+                ]) {
+
+                    sh '''
+                        set -eu
+
+                        echo "Docker Path:"
+                        which "$DOCKER"
+
+                        "$DOCKER" --version
+
+                        IMAGE_TAG="$DOCKERHUB_USERNAME/$IMAGE_NAME:latest"
+
+                        echo "$IMAGE_TAG" > image-tag.txt
+
+                        echo "$DOCKERHUB_PASSWORD" | \
+                        "$DOCKER" \
+                        --config "$DOCKER_CONFIG" \
+                        login \
+                        -u "$DOCKERHUB_USERNAME" \
+                        --password-stdin
+                    '''
+                }
+            }
+        }
+
+        stage('Build Image') {
+            steps {
+                sh '''
+                    set -eu
+
+                    IMAGE_TAG=$(cat image-tag.txt)
+
+                    "$DOCKER" \
+                        --config "$DOCKER_CONFIG" \
+                        build \
+                        -t "$IMAGE_TAG" \
+                        source
+                '''
+            }
+        }
+
+        stage('Push Image') {
+            steps {
+                sh '''
+                    set -eu
+
+                    IMAGE_TAG=$(cat image-tag.txt)
+
+                    "$DOCKER" \
+                        --config "$DOCKER_CONFIG" \
+                        push "$IMAGE_TAG"
+                '''
+            }
+        }
+
+        stage('Return Status') {
+            steps {
+                sh '''
+                    IMAGE_TAG=$(cat image-tag.txt)
+
+                    echo ""
+                    echo "========================================="
+                    echo " BUILD SUCCESSFUL "
+                    echo "========================================="
+                    echo ""
+                    echo "Image : $IMAGE_TAG"
+                    echo "Port  : $PORT"
+                    echo ""
+                    echo "Pull Command:"
+                    echo "docker pull $IMAGE_TAG"
+                    echo ""
+                    echo "Run Command:"
+                    echo "docker run -d -p $PORT:$PORT $IMAGE_TAG"
+                    echo ""
+                '''
+            }
+        }
+    }
+
+    post {
+
+        always {
+            sh '''
+                "$DOCKER" \
+                --config "$DOCKER_CONFIG" \
+                logout || true
+
+                rm -rf "$DOCKER_CONFIG" || true
+            '''
+        }
+
+        success {
+            echo "Repo2Docker completed successfully."
+        }
+
+        failure {
+            echo "Repo2Docker pipeline failed."
+        }
+    }
+}
