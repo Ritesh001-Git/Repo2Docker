@@ -1,86 +1,162 @@
 pipeline {
-  agent any
+    agent any
 
-  parameters {
-    string(name: 'REPO_URL', defaultValue: '', description: 'Public GitHub repository URL')
-    string(name: 'IMAGE_NAME', defaultValue: '', description: 'Docker image name without Docker Hub username')
-    string(name: 'PORT', defaultValue: '3000', description: 'Application port, passed through for traceability')
-  }
-
-  environment {
-    IMAGE_TAG = ''
-  }
-
-  stages {
-    stage('Checkout') {
-      steps {
-        sh '''
-          set -eu
-          rm -rf source
-          git clone --depth 1 "$REPO_URL" source
-        '''
-      }
+    parameters {
+        string(name: 'REPO_URL', defaultValue: '', description: 'Public GitHub repository URL')
+        string(name: 'IMAGE_NAME', defaultValue: '', description: 'Docker image name')
+        string(name: 'PORT', defaultValue: '3000', description: 'Application Port')
     }
 
-    stage('Validate Dockerfile') {
-      steps {
-        sh '''
-          set -eu
-          test -f source/Dockerfile
-        '''
-      }
+    environment {
+        DOCKER = "/usr/local/bin/docker"
+        DOCKER_CONFIG = "${WORKSPACE}/.docker"
+        IMAGE_TAG = ""
     }
 
-    stage('Docker Login') {
-      steps {
-        withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
-          sh '''
-            set -eu
-            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            echo "$DOCKERHUB_USERNAME/$IMAGE_NAME:latest" > image-tag.txt
-          '''
+    stages {
+
+        stage('Checkout') {
+            steps {
+                sh '''
+                    set -eu
+
+                    rm -rf source
+                    git clone --depth 1 "$REPO_URL" source
+                '''
+            }
         }
-      }
+
+        stage('Validate Dockerfile') {
+            steps {
+                sh '''
+                    set -eu
+
+                    test -f source/Dockerfile
+                '''
+            }
+        }
+
+        stage('Prepare Docker Config') {
+            steps {
+                sh '''
+                    set -eu
+
+                    mkdir -p "$DOCKER_CONFIG"
+
+                    cat > "$DOCKER_CONFIG/config.json" <<EOF
+{
+  "auths": {}
+}
+EOF
+                '''
+            }
+        }
+
+        stage('Docker Login') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'DockerHubCred',
+                        usernameVariable: 'DOCKERHUB_USERNAME',
+                        passwordVariable: 'DOCKERHUB_PASSWORD'
+                    )
+                ]) {
+
+                    sh '''
+                        set -eu
+
+                        echo "Docker Path:"
+                        which "$DOCKER"
+
+                        "$DOCKER" --version
+
+                        IMAGE_TAG="$DOCKERHUB_USERNAME/$IMAGE_NAME:latest"
+
+                        echo "$IMAGE_TAG" > image-tag.txt
+
+                        echo "$DOCKERHUB_PASSWORD" | \
+                        "$DOCKER" \
+                        --config "$DOCKER_CONFIG" \
+                        login \
+                        -u "$DOCKERHUB_USERNAME" \
+                        --password-stdin
+                    '''
+                }
+            }
+        }
+
+        stage('Build Image') {
+            steps {
+                sh '''
+                    set -eu
+
+                    IMAGE_TAG=$(cat image-tag.txt)
+
+                    "$DOCKER" \
+                        --config "$DOCKER_CONFIG" \
+                        build \
+                        -t "$IMAGE_TAG" \
+                        source
+                '''
+            }
+        }
+
+        stage('Push Image') {
+            steps {
+                sh '''
+                    set -eu
+
+                    IMAGE_TAG=$(cat image-tag.txt)
+
+                    "$DOCKER" \
+                        --config "$DOCKER_CONFIG" \
+                        push "$IMAGE_TAG"
+                '''
+            }
+        }
+
+        stage('Return Status') {
+            steps {
+                sh '''
+                    IMAGE_TAG=$(cat image-tag.txt)
+
+                    echo ""
+                    echo "========================================="
+                    echo " BUILD SUCCESSFUL "
+                    echo "========================================="
+                    echo ""
+                    echo "Image : $IMAGE_TAG"
+                    echo "Port  : $PORT"
+                    echo ""
+                    echo "Pull Command:"
+                    echo "docker pull $IMAGE_TAG"
+                    echo ""
+                    echo "Run Command:"
+                    echo "docker run -d -p $PORT:$PORT $IMAGE_TAG"
+                    echo ""
+                '''
+            }
+        }
     }
 
-    stage('Build Image') {
-      steps {
-        sh '''
-          set -eu
-          IMAGE_TAG="$(cat image-tag.txt)"
-          docker build -t "$IMAGE_TAG" source
-        '''
-      }
-    }
+    post {
 
-    stage('Push Image') {
-      steps {
-        sh '''
-          set -eu
-          IMAGE_TAG="$(cat image-tag.txt)"
-          docker push "$IMAGE_TAG"
-        '''
-      }
-    }
+        always {
+            sh '''
+                "$DOCKER" \
+                --config "$DOCKER_CONFIG" \
+                logout || true
 
-    stage('Return Status') {
-      steps {
-        sh '''
-          set -eu
-          IMAGE_TAG="$(cat image-tag.txt)"
-          echo "SUCCESS: pushed $IMAGE_TAG"
-          echo "PORT: $PORT"
-        '''
-      }
-    }
-  }
+                rm -rf "$DOCKER_CONFIG" || true
+            '''
+        }
 
-  post {
-    failure {
-      echo 'FAILED: Repo2Docker Jenkins pipeline did not complete successfully.'
+        success {
+            echo "Repo2Docker completed successfully."
+        }
+
+        failure {
+            echo "Repo2Docker pipeline failed."
+        }
     }
-    always {
-      sh 'docker logout || true'
-    }
-  }
 }
