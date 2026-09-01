@@ -33,6 +33,11 @@ jenkins/
   Jenkinsfile         Sample parameterized Jenkins pipeline
 ```
 
+## 🎥 Workflow Animation
+
+The following animation demonstrates the complete Repo2Docker workflow, including GitHub repository cloning, Jenkins CI/CD, Docker image build and push, Kubernetes deployment, and AI-based error analysis.
+
+[▶️ View Repo2Docker Workflow Animation](repo2docker-flow-animation_9c95cdac.mp4)
 ## Backend Setup
 
 ```bash
