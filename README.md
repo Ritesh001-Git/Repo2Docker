@@ -16,7 +16,7 @@ The app accepts a GitHub repository URL, Docker image name, and port number. Fas
 
 The following animation demonstrates the complete Repo2Docker workflow, including GitHub repository cloning, Jenkins CI/CD, Docker image build and push, Kubernetes deployment, and AI-based error analysis.
 
-[▶️ View Repo2Docker Workflow Animation](repo2docker-flow-animation_9c95cdac.mp4)
+https://github.com/user-attachments/assets/197e3bf0-1bc0-4819-a007-8679df75bc0a
 
 ## Project Structure
 
