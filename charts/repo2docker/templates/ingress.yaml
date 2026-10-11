@@ -1,0 +1,57 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: repo2docker
+  namespace: {{ .Values.namespace }}
+  annotations:
+{{ toYaml .Values.ingress.annotations | indent 4 }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: /build
+            pathType: Prefix
+            backend:
+              service:
+                name: repo2docker-backend
+                port:
+                  number: {{ .Values.backend.service.port }}
+          - path: /status
+            pathType: Prefix
+            backend:
+              service:
+                name: repo2docker-backend
+                port:
+                  number: {{ .Values.backend.service.port }}
+          - path: /logs
+            pathType: Prefix
+            backend:
+              service:
+                name: repo2docker-backend
+                port:
+                  number: {{ .Values.backend.service.port }}
+          - path: /health
+            pathType: Prefix
+            backend:
+              service:
+                name: repo2docker-backend
+                port:
+                  number: {{ .Values.backend.service.port }}
+          - path: /metrics
+            pathType: Prefix
+            backend:
+              service:
+                name: repo2docker-backend
+                port:
+                  number: {{ .Values.backend.service.port }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: repo2docker-frontend
+                port:
+                  number: {{ .Values.frontend.service.port }}
+{{- end }}
