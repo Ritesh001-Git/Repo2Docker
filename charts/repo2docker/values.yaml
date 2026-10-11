@@ -1,0 +1,83 @@
+namespace: repo2docker
+
+images:
+  backend:
+    repository: your-dockerhub-username/repo2docker-backend
+    tag: latest
+    pullPolicy: Always
+  frontend:
+    repository: your-dockerhub-username/repo2docker-frontend
+    tag: latest
+    pullPolicy: Always
+
+frontend:
+  replicas: 1
+  service:
+    port: 80
+  env:
+    apiBaseUrl: "http://repo2docker.local"
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+  hpa:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+    cpuTargetPercentage: 70
+
+backend:
+  replicas: 1
+  service:
+    port: 8000
+  env:
+    databaseUrl: "sqlite:////data/repo2docker.db"
+    corsOrigins: "http://repo2docker.local"
+    jenkinsUrl: "http://jenkins.jenkins.svc.cluster.local:8080"
+    jenkinsJobName: "repo2docker"
+    dockerhubUsername: "your-dockerhub-username"
+    geminiModel: "gemini-2.5-flash"
+    previewDeployEnabled: "true"
+    previewBaseUrl: "http://repo2docker.local"
+    previewNamespacePrefix: "repo2docker-preview"
+    otelTracingEnabled: "false"
+    otelServiceName: "repo2docker-backend"
+    otelExporterOtlpEndpoint: "http://jaeger-collector.observability.svc.cluster.local:4317"
+    otelExporterOtlpInsecure: "true"
+  secrets:
+    jenkinsUsername: ""
+    jenkinsApiToken: ""
+    geminiApiKey: ""
+  persistence:
+    enabled: true
+    size: 2Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  hpa:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 4
+    cpuTargetPercentage: 70
+
+ingress:
+  enabled: true
+  className: traefik
+  host: repo2docker.local
+  annotations: {}
+
+serviceAccount:
+  create: true
+  name: repo2docker-backend
+
+monitoring:
+  serviceMonitor:
+    enabled: false
+    interval: 30s
