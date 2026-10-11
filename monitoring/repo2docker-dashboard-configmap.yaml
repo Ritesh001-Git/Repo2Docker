@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: repo2docker-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  repo2docker-dashboard.json: |
+    {
+      "title": "Repo2Docker MVP",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "10s",
+      "panels": [
+        {
+          "type": "stat",
+          "title": "Build Requests",
+          "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
+          "targets": [{"expr": "repo2docker_build_requests_total"}]
+        },
+        {
+          "type": "stat",
+          "title": "Successful Builds",
+          "gridPos": {"x": 6, "y": 0, "w": 6, "h": 4},
+          "targets": [{"expr": "repo2docker_build_success_total"}]
+        },
+        {
+          "type": "stat",
+          "title": "Failed Builds",
+          "gridPos": {"x": 12, "y": 0, "w": 6, "h": 4},
+          "targets": [{"expr": "repo2docker_build_failure_total"}]
+        },
+        {
+          "type": "stat",
+          "title": "Active Builds",
+          "gridPos": {"x": 18, "y": 0, "w": 6, "h": 4},
+          "targets": [{"expr": "repo2docker_active_builds"}]
+        },
+        {
+          "type": "timeseries",
+          "title": "Build Duration p95",
+          "gridPos": {"x": 0, "y": 4, "w": 12, "h": 8},
+          "targets": [{"expr": "histogram_quantile(0.95, sum(rate(repo2docker_build_duration_seconds_bucket[5m])) by (le))"}]
+        },
+        {
+          "type": "timeseries",
+          "title": "API Latency p95",
+          "gridPos": {"x": 12, "y": 4, "w": 12, "h": 8},
+          "targets": [{"expr": "histogram_quantile(0.95, sum(rate(repo2docker_api_request_duration_seconds_bucket[5m])) by (le))"}]
+        },
+        {
+          "type": "timeseries",
+          "title": "EC2 CPU",
+          "gridPos": {"x": 0, "y": 12, "w": 8, "h": 8},
+          "targets": [{"expr": "100 - (avg by(instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)"}]
+        },
+        {
+          "type": "timeseries",
+          "title": "EC2 Memory Used",
+          "gridPos": {"x": 8, "y": 12, "w": 8, "h": 8},
+          "targets": [{"expr": "100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))"}]
+        },
+        {
+          "type": "timeseries",
+          "title": "EC2 Disk Used",
+          "gridPos": {"x": 16, "y": 12, "w": 8, "h": 8},
+          "targets": [{"expr": "100 * (1 - (node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"}))"}]
+        },
+        {
+          "type": "timeseries",
+          "title": "Running Preview Apps",
+          "gridPos": {"x": 0, "y": 20, "w": 12, "h": 8},
+          "targets": [{"expr": "repo2docker_running_preview_apps"}]
+        },
+        {
+          "type": "timeseries",
+          "title": "Kubernetes Running Pods",
+          "gridPos": {"x": 12, "y": 20, "w": 12, "h": 8},
+          "targets": [{"expr": "sum(kube_pod_status_phase{phase=\"Running\"})"}]
+        }
+      ]
+    }
