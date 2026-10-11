@@ -1,0 +1,47 @@
+daemonset:
+  enabled: true
+
+deployment:
+  enabled: false
+
+filebeatConfig:
+  filebeat.yml: |
+    filebeat.inputs:
+      - type: container
+        paths:
+          - /var/log/containers/*.log
+        processors:
+          - add_kubernetes_metadata:
+              host: ${NODE_NAME}
+              matchers:
+                - logs_path:
+                    logs_path: "/var/log/containers/"
+          - drop_event:
+              when:
+                not:
+                  or:
+                    - equals:
+                        kubernetes.namespace: "repo2docker"
+                    - regexp:
+                        kubernetes.namespace: "^repo2docker-preview-"
+                    - equals:
+                        kubernetes.namespace: "jenkins"
+                    - equals:
+                        kubernetes.namespace: "monitoring"
+
+    output.logstash:
+      hosts: ["logstash-logstash:5044"]
+
+extraEnvs:
+  - name: NODE_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 300m
+    memory: 512Mi

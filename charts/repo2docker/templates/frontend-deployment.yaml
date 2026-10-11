@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: repo2docker-frontend
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: repo2docker-frontend
+spec:
+  replicas: {{ .Values.frontend.replicas }}
+  selector:
+    matchLabels:
+      app: repo2docker-frontend
+  template:
+    metadata:
+      labels:
+        app: repo2docker-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: "{{ .Values.images.frontend.repository }}:{{ .Values.images.frontend.tag }}"
+          imagePullPolicy: {{ .Values.images.frontend.pullPolicy }}
+          ports:
+            - containerPort: 80
+          resources:
+{{ toYaml .Values.frontend.resources | indent 12 }}

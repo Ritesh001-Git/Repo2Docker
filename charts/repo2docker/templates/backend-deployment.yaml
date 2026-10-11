@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: repo2docker-backend
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: repo2docker-backend
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  selector:
+    matchLabels:
+      app: repo2docker-backend
+  template:
+    metadata:
+      labels:
+        app: repo2docker-backend
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      containers:
+        - name: backend
+          image: "{{ .Values.images.backend.repository }}:{{ .Values.images.backend.tag }}"
+          imagePullPolicy: {{ .Values.images.backend.pullPolicy }}
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: repo2docker-backend-config
+            - secretRef:
+                name: repo2docker-backend-secret
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+{{ toYaml .Values.backend.resources | indent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+{{- if .Values.backend.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: repo2docker-backend-data
+{{- else }}
+          emptyDir: {}
+{{- end }}

@@ -16,3 +16,13 @@ npm-debug.log*
 # IDE
 .idea/
 .vscode/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+
+# Local Kubernetes
+kubeconfig
+*.kubeconfig

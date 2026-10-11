@@ -1,0 +1,42 @@
+replicas: 1
+
+logstashPipeline:
+  logstash.conf: |
+    input {
+      beats {
+        port => 5044
+      }
+    }
+
+    filter {
+      if [kubernetes][namespace] == "repo2docker" or [kubernetes][namespace] =~ /^repo2docker-preview-/ {
+        mutate {
+          add_field => { "repo2docker_log" => "true" }
+        }
+      }
+    }
+
+    output {
+      elasticsearch {
+        hosts => ["http://elasticsearch-master:9200"]
+        index => "repo2docker-logs-%{+YYYY.MM.dd}"
+      }
+      stdout {
+        codec => rubydebug
+      }
+    }
+
+service:
+  ports:
+    - name: beats
+      port: 5044
+      protocol: TCP
+      targetPort: 5044
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    cpu: 500m
+    memory: 1Gi
