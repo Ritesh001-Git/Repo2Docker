@@ -55,4 +55,6 @@ def get_logs(
         gemini_explanation=build.gemini_explanation,
         pull_command=pull_command,
         run_command=run_command,
+        preview_url=build.preview_url,
+        preview_status=build.preview_status,
     )

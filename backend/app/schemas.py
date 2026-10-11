@@ -47,3 +47,5 @@ class BuildLogsResponse(BaseModel):
     gemini_explanation: str | None = None
     pull_command: str | None = None
     run_command: str | None = None
+    preview_url: str | None = None
+    preview_status: str | None = None

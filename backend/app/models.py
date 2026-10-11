@@ -28,6 +28,9 @@ class Build(Base):
     gemini_explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
     jenkins_queue_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     jenkins_build_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    preview_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    preview_namespace: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    preview_status: Mapped[str | None] = mapped_column(String(50), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
