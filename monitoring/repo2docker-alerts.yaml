@@ -1,0 +1,46 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: repo2docker-alerts
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: repo2docker.rules
+      rules:
+        - alert: Repo2DockerHighFailureRate
+          expr: increase(repo2docker_build_failure_total[15m]) > 3
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Repo2Docker build failures are increasing"
+            description: "More than three builds failed in the last 15 minutes."
+
+        - alert: Repo2DockerBackendDown
+          expr: up{job=~".*repo2docker-backend.*"} == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Repo2Docker backend metrics target is down"
+            description: "Prometheus cannot scrape the FastAPI backend."
+
+        - alert: Repo2DockerSlowApi
+          expr: histogram_quantile(0.95, sum(rate(repo2docker_api_request_duration_seconds_bucket[5m])) by (le)) > 2
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Repo2Docker API p95 latency is high"
+            description: "API p95 latency has been above 2 seconds for 5 minutes."
+
+        - alert: NodeDiskNearlyFull
+          expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "EC2 root disk is almost full"
+            description: "Less than 15% disk space is available on the root filesystem."
