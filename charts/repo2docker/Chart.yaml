@@ -1,0 +1,6 @@
+apiVersion: v2
+name: repo2docker
+description: Repo2Docker web app, backend API, Kubernetes previews, and HPA.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
