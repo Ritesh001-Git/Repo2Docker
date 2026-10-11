@@ -45,7 +45,12 @@ export default function BuildResult() {
       <ProgressCard status={status?.status || result?.status || "queued"} logs={result?.logs || ""} />
 
       {result?.status === "success" && (
-        <SuccessCard pullCommand={result.pull_command} runCommand={result.run_command} />
+        <SuccessCard
+          pullCommand={result.pull_command}
+          runCommand={result.run_command}
+          previewUrl={result.preview_url}
+          previewStatus={result.preview_status}
+        />
       )}
 
       {result?.status === "failed" && <AIExplanationCard explanation={result.gemini_explanation} />}
