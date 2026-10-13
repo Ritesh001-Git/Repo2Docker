@@ -1,6 +1,6 @@
 # Complete EC2 Deployment Guide: Repo2Docker, Kubernetes, Monitoring, Logging, and Tracing
 
-This guide deploys the full Repo2Docker platform on one low-cost AWS EC2 instance:
+This guide deploys the full Repo2Docker platform on one AWS EC2 instance:
 
 - React frontend
 - FastAPI backend
