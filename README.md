@@ -106,27 +106,76 @@ Observability:
 The following is a representative structure based on the project layout; optional deployment and observability folders may differ by branch.
 
 ```text
+## Repository Structure
+
+```text
 .
 ├── backend/
 │   ├── app/
-│   │   ├── api/              # FastAPI routes
-│   │   ├── services/         # Jenkins, Gemini, and build orchestration
-│   │   ├── config.py         # Environment-based configuration
-│   │   ├── database.py       # Database setup
-│   │   ├── models.py         # SQLAlchemy models
-│   │   └── schemas.py        # Pydantic schemas
-│   ├── Dockerfile
-│   └── requirements.txt
-├── frontend/
-│   └── src/
-│       ├── pages/            # Dashboard, build status, and result views
-│       └── services/api.js   # Axios API client
-├── jenkins/
-│   ├── Jenkinsfile           # Build pipeline
-│   └── Jenkinsfile.production # Production pipeline, if present
-├── charts/                   # Helm chart(s), if present
-├── terraform/                # AWS infrastructure definitions, if present
-└── README.md
+│   │   ├── api/                       # FastAPI API routes
+│   │   ├── services/
+│   │   │   ├── build_service.py       # Docker image build orchestration
+│   │   │   ├── gemini_service.py      # Google Gemini AI integration
+│   │   │   ├── jenkins_service.py     # Jenkins pipeline integration
+│   │   │   ├── kubernetes_preview_service.py # Preview deployments
+│   │   │   ├── metrics_service.py     # Application metrics
+│   │   │   └── tracing_service.py     # Distributed tracing
+│   │   ├── config.py                  # Environment configuration
+│   │   ├── database.py                # Database connection and setup
+│   │   ├── main.py                    # FastAPI application entry point
+│   │   ├── models.py                  # SQLAlchemy database models
+│   │   └── schemas.py                 # Pydantic request/response schemas
+│   ├── .env.example                   # Example environment variables
+│   ├── Dockerfile                     # Backend container image
+│   ├── requirements.txt               # Python dependencies
+│   └── repo2docker.db                 # SQLite database
+├── charts/
+│   └── repo2docker/
+│       ├── templates/
+│       │   ├── backend-configmap.yaml
+│       │   ├── backend-deployment.yaml
+│       │   ├── backend-hpa.yaml
+│       │   ├── backend-pvc.yaml
+│       │   ├── backend-rbac.yaml
+│       │   ├── backend-secret.yaml
+│       │   ├── backend-service.yaml
+│       │   ├── frontend-configmap.yaml
+│       │   ├── frontend-deployment.yaml
+│       │   ├── frontend-hpa.yaml
+│       │   ├── frontend-service.yaml
+│       │   ├── ingress.yaml
+│       │   ├── namespace.yaml
+│       │   └── servicemonitor.yaml
+│       ├── Chart.yaml                 # Helm chart metadata
+│       └── values.yaml                # Helm configuration values
+├── docs/
+│   └── DeploymentGuide.MD             # Deployment documentation
+├── frontend/                          # React frontend application
+├── jenkins/                           # Jenkins pipeline configuration
+├── monitoring/                        # Prometheus and Grafana configuration
+├── observability/
+│   ├── logging/
+│   │   ├── elasticsearch-values.yaml  # Elasticsearch configuration
+│   │   ├── filebeat-values.yaml       # Filebeat log collection
+│   │   ├── kibana-values.yaml         # Kibana visualization
+│   │   └── logstash-values.yaml       # Log processing configuration
+│   └── tracing/
+│       └── jaeger-all-in-one.yaml     # Jaeger distributed tracing
+├── scripts/
+│   └── cleanup-preview-namespaces.sh  # Preview namespace cleanup
+├── terraform/
+│   └── aws-low-cost/
+│       ├── main.tf                   # AWS infrastructure provisioning
+│       ├── outputs.tf                # Terraform outputs
+│       ├── terraform.tfvars.example  # Example variable values
+│       ├── user-data.sh              # EC2 initialization script
+│       └── variables.tf              # Terraform input variables
+├── .dockerignore
+├── .gitignore
+├── README.md
+```
+
+**Note:** The `.venv/`, `__pycache__/`, and `.env` entries are omitted because they are local environment, cache, or configuration files rather than core project components. The `.env` file should not be committed if it contains secrets.
 ```
 
 ## Prerequisites
@@ -349,4 +398,6 @@ The exact scrape targets, ports, dashboards, retention settings, and tracing exp
 
 ## License
 
-Add the license used by this repository here. If no license has been selected, state that the project is currently unlicensed rather than implying permission to reuse the code.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+Copyright (c) 2026 Ritesh Kumar Swain
