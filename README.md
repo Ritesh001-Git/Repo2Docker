@@ -6,6 +6,37 @@ The platform is designed to make application packaging and deployment easier: us
 
 > **Project status:** Capabilities depend on the configured Jenkins pipeline, AWS/K3s environment, and observability services. Review the configuration and pipeline files in this repository before deploying to a new environment.
 
+## What You Will Build
+
+```mermaid
+flowchart TB
+  Dev[Developer] --> GitHub[GitHub Repo]
+  GitHub --> Jenkins[Jenkins Production Pipeline]
+  Jenkins --> DockerHub[Docker Hub]
+  Jenkins --> K3s[K3s on EC2]
+
+  User[End User] --> Frontend[React Frontend]
+  Frontend --> Backend[FastAPI Backend]
+  Backend --> UserBuild[Jenkins User Build Pipeline]
+  UserBuild --> SourceRepo[Public GitHub App Repo]
+  UserBuild --> DockerHub
+  Backend --> Preview[Kubernetes Preview App]
+  User --> Preview
+
+  Backend --> Gemini[Gemini API]
+  Backend --> Prometheus[Prometheus Metrics]
+  K3s --> Prometheus
+  EC2[EC2 Node Metrics] --> Prometheus
+  Prometheus --> Grafana[Grafana Dashboards]
+
+  Pods[Pod Logs] --> Filebeat[Filebeat]
+  Filebeat --> Logstash[Logstash]
+  Logstash --> Elasticsearch[Elasticsearch]
+  Elasticsearch --> Kibana[Kibana Logs UI]
+
+  Backend --> Jaeger[Jaeger Traces]
+```
+
 ## 🎥 Workflow Animation
 
 The animation below demonstrates the Repo2Docker workflow, including GitHub repository cloning, Jenkins CI/CD, Docker image build and push, Kubernetes deployment, and AI-assisted error analysis.
