@@ -396,6 +396,12 @@ The exact scrape targets, ports, dashboards, retention settings, and tracing exp
 - Add alerting, dashboards, and observability retention policies.
 - Move to a managed database and a multi-node cluster for production workloads if required.
 
+## Deployment Guide
+
+For detailed instructions on deploying Repo2Docker, configuring AWS infrastructure using Terraform, setting up the application, and managing deployment components, refer to the deployment guide.
+
+[Deployment Guide](https://github.com/Ritesh001-Git/Repo2Docker/blob/main/docs/DeploymentGuide.MD)
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
