@@ -1,5 +1,0 @@
-key_name            = "your-existing-keypair"
-allowed_ssh_cidr    = "YOUR_PUBLIC_IP/32"
-allowed_jenkins_cidr = "YOUR_PUBLIC_IP/32"
-create_elastic_ip   = false
-instance_type       = "t3.micro"
